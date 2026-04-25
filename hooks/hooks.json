@@ -3,7 +3,7 @@
   "hooks": {
     "sessionStart": [
       {
-        "command": "node ${CURSOR_PROJECT_DIR}/hooks/session-start.js",
+        "command": "node ${CURSOR_PLUGIN_DIR}/hooks/session-start.js",
         "timeout": 10
       }
     ]

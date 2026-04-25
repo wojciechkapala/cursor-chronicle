@@ -1,0 +1,38 @@
+{
+  "name": "cursor-chronicle",
+  "owner": {
+    "name": "Wojciech Kapała",
+    "email": "wojtek@botmate.pl"
+  },
+  "metadata": {
+    "description": "Pipes Codex Chronicle's screen-recording memory into Cursor.",
+    "version": "0.3.0"
+  },
+  "plugins": [
+    {
+      "name": "cursor-chronicle",
+      "source": "./",
+      "description": "Auto-injects Codex Chronicle 10-min activity summaries into Cursor via a sessionStart hook, plus an MCP server with 5 on-demand recall tools (time / topic / hybrid). Bilingual EN/PL.",
+      "version": "0.3.0",
+      "author": {
+        "name": "Wojciech Kapała",
+        "email": "wojtek@botmate.pl"
+      },
+      "category": "context",
+      "tags": [
+        "codex",
+        "chronicle",
+        "context",
+        "memory",
+        "hooks",
+        "mcp",
+        "screen-recording",
+        "time-travel",
+        "recall"
+      ],
+      "homepage": "https://github.com/wojciechkapala/cursor-chronicle",
+      "repository": "https://github.com/wojciechkapala/cursor-chronicle",
+      "license": "MIT"
+    }
+  ]
+}

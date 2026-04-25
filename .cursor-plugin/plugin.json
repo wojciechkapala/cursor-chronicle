@@ -1,0 +1,23 @@
+{
+  "name": "cursor-chronicle",
+  "description": "Pipes Codex Chronicle's screen-recording memory into Cursor — sessionStart hook auto-injects recent activity + manifest + live-state, and an MCP server exposes 5 tools for on-demand recall by time, topic, or both. Bilingual EN/PL.",
+  "version": "0.3.0",
+  "author": {
+    "name": "Wojciech Kapała",
+    "email": "wojtek@botmate.pl"
+  },
+  "homepage": "https://github.com/wojciechkapala/cursor-chronicle",
+  "repository": "https://github.com/wojciechkapala/cursor-chronicle",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "chronicle",
+    "context",
+    "memory",
+    "hooks",
+    "mcp",
+    "screen-recording",
+    "time-travel",
+    "recall"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "cursor-chronicle": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${CURSOR_PLUGIN_DIR}/src/server.js"]
+    }
+  }
+}

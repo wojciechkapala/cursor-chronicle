@@ -2,6 +2,20 @@
 
 All notable changes to **cursor-chronicle** are recorded here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] — 2026-04-25
+
+### Changed (BREAKING for installation, not for behaviour)
+- **Repository is now a proper Cursor plugin** per [cursor.com/docs/plugins](https://cursor.com/docs/plugins). Manifest moved to `.cursor-plugin/plugin.json`; rule moved from `.cursor/rules/cursor-chronicle.mdc` → `rules/cursor-chronicle.mdc`; hook config moved from `.cursor/hooks.json` → `hooks/hooks.json`; an MCP autoloader `mcp.json` is now committed at the repo root. Cursor auto-discovers all four when the plugin loads.
+- **One-line install**: clone the repo straight into `~/.cursor/plugins/local/cursor-chronicle`, run `npm install`, restart Cursor. No more hand-editing `~/.cursor/hooks.json` or `~/.cursor/mcp.json` — the bundled `hooks/hooks.json` and `mcp.json` use `${CURSOR_PLUGIN_DIR}` so paths resolve regardless of where the plugin lives.
+- README rewritten around the plugin install flow; the manual `mcp.json` / `hooks.json` snippets removed.
+
+### Added
+- `.cursor-plugin/marketplace.json` — single-plugin marketplace manifest, pre-populated with `category: context`, tags, homepage, repository, license. Ready for submission to the Cursor marketplace at [cursor.com/marketplace/publish](https://cursor.com/marketplace/publish).
+- README links to the relevant Cursor docs (plugins, hooks, MCP, rules).
+
+### Bumped
+- `package.json` to 0.3.0; `.cursor-plugin/plugin.json` and `.cursor-plugin/marketplace.json` ship the same version.
+
 ## [0.2.0] — 2026-04-25
 
 ### Added

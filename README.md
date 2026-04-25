@@ -3,22 +3,22 @@
 > Bring [Codex Chronicle](https://github.com/openai/codex)'s screen-recording memory into Cursor. Ask Cursor *"what was I doing 5 hours ago?"* or *"when did I last touch the auth bug?"* and get a real answer.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](CHANGELOG.md)
-[![Cursor MCP](https://img.shields.io/badge/Cursor-MCP%20server-7C3AED.svg)](https://cursor.com/docs/context/mcp)
+[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](CHANGELOG.md)
+[![Cursor plugin](https://img.shields.io/badge/Cursor-plugin-7C3AED.svg)](https://cursor.com/docs/plugins)
 
-Codex Chronicle (an OpenAI Codex feature) passively records your screen, runs OCR, and writes a markdown summary every ~10 minutes describing what you have been doing across your apps. **cursor-chronicle** is a tiny [Model Context Protocol](https://modelcontextprotocol.io) server that exposes those summaries to Cursor's agent as tools, plus a Cursor rule (`.cursor/rules/cursor-chronicle.mdc`) that teaches the agent when to use them.
+Codex Chronicle (an OpenAI Codex feature) passively records your screen, runs OCR, and writes a markdown summary every ~10 minutes describing what you have been doing across your apps. **cursor-chronicle** is a [Cursor plugin](https://cursor.com/docs/plugins) that ships everything Cursor needs to plug those summaries into the model: a `sessionStart` hook, an MCP server, and an always-on rule.
 
-It is the Cursor counterpart of [`claude-chronicle`](https://github.com/wojciechkapala/claude-chronicle) — same data source, same behaviour, mapped to the primitives [Cursor actually exposes](https://cursor.com/docs/hooks): hooks, MCP, and Rules.
+It is the Cursor counterpart of [`claude-chronicle`](https://github.com/wojciechkapala/claude-chronicle) — same data source, same behaviour, packaged as a proper Cursor plugin.
 
 ## How it works
 
-Cursor exposes a `sessionStart` hook with `additional_context` output, an MCP server transport, and `alwaysApply` Rules. cursor-chronicle uses all three, mirroring how `claude-chronicle` uses Claude Code's hook primitives:
+The repo is a self-contained Cursor plugin (`.cursor-plugin/plugin.json` at the root). Cursor auto-discovers all three components when the plugin loads:
 
-| Concern | Mechanism | File |
+| Concern | Mechanism | Path inside the plugin |
 |---|---|---|
-| **Bootstrap context at session start** (3 freshest 10-min summaries + full archive manifest + live-recording state) | `sessionStart` hook returning `additional_context` | `hooks/session-start.js` + `.cursor/hooks.json` |
-| **On-demand recall by time / topic / both** (incl. read a single entry) | MCP server with 5 tools | `src/server.js` |
-| **Tell the agent when to use which tool** | Always-on rule | `.cursor/rules/cursor-chronicle.mdc` |
+| **Bootstrap context at session start** — 3 freshest 10-min summaries in full + manifest of every Chronicle entry + live-recording state | `sessionStart` hook returning `additional_context` | `hooks/hooks.json` + `hooks/session-start.js` |
+| **On-demand recall by time / topic / both** — incl. read a single entry, inspect live screen | MCP server with 5 tools | `mcp.json` + `src/server.js` |
+| **Tell the agent when to use which tool** | Always-on rule | `rules/cursor-chronicle.mdc` |
 
 The MCP server exposes:
 
@@ -39,62 +39,33 @@ Together, the hook handles the always-injected bootstrap that `claude-chronicle`
 
 ## Install
 
-### 1. Clone & install dependencies
+### Recommended: install as a local Cursor plugin (one command)
+
+Cursor auto-discovers any plugin under `~/.cursor/plugins/local/`. Clone the repo straight into that path and install the runtime:
 
 ```bash
-git clone https://github.com/wojciechkapala/cursor-chronicle.git
-cd cursor-chronicle
+git clone https://github.com/wojciechkapala/cursor-chronicle.git \
+  ~/.cursor/plugins/local/cursor-chronicle
+cd ~/.cursor/plugins/local/cursor-chronicle
 npm install
 ```
 
-### 2. Register the `sessionStart` hook (auto-bootstrap)
+Restart Cursor. The plugin manifest at `.cursor-plugin/plugin.json`, the rule under `rules/`, the hook under `hooks/`, and the MCP server declared in `mcp.json` will be discovered automatically. Verify in **Settings → Plugins** that `cursor-chronicle` is listed and enabled, and in **Settings → Features → Model Context Protocol** that the server has 5 tools (`chronicle_recent`, `chronicle_manifest`, `chronicle_search`, `chronicle_read_entry`, `chronicle_live_state`).
 
-Cursor reads hooks config from `~/.cursor/hooks.json` (global) or `<workspace>/.cursor/hooks.json` (project). Add the bootstrap hook with an **absolute** path to the script you just cloned:
+### Alternative: clone elsewhere and symlink
 
-```json
-{
-  "version": 1,
-  "hooks": {
-    "sessionStart": [
-      {
-        "command": "node /absolute/path/to/cursor-chronicle/hooks/session-start.js",
-        "timeout": 10
-      }
-    ]
-  }
-}
-```
-
-Cursor watches `hooks.json` and reloads automatically; no restart needed for hook config.
-
-### 3. Register the MCP server (on-demand recall)
-
-Cursor reads MCP config from either `~/.cursor/mcp.json` (global) or `<workspace>/.cursor/mcp.json` (project). Add an entry:
-
-```json
-{
-  "mcpServers": {
-    "cursor-chronicle": {
-      "type": "stdio",
-      "command": "node",
-      "args": ["/absolute/path/to/cursor-chronicle/src/server.js"]
-    }
-  }
-}
-```
-
-Restart Cursor and confirm the server is connected: **Settings → Features → Model Context Protocol** should list `cursor-chronicle` with 5 tools available.
-
-### 4. Use the rule
-
-The `.cursor/rules/cursor-chronicle.mdc` file in this repo is set to `alwaysApply: true`, so Cursor automatically loads it for any workspace where this folder is the project root. To use the same rule across **all** projects, copy it into your global Cursor rules directory or into each workspace's `.cursor/rules/`:
+If you keep your code under a different directory, clone there and symlink:
 
 ```bash
-mkdir -p ~/.cursor/rules
-cp .cursor/rules/cursor-chronicle.mdc ~/.cursor/rules/
+git clone https://github.com/wojciechkapala/cursor-chronicle.git ~/code/cursor-chronicle
+cd ~/code/cursor-chronicle && npm install
+mkdir -p ~/.cursor/plugins/local
+ln -s ~/code/cursor-chronicle ~/.cursor/plugins/local/cursor-chronicle
 ```
 
-(Cursor's project rules in `<workspace>/.cursor/rules/` override user rules; both are loaded.)
+### Future: Cursor Marketplace
+
+Once the plugin is reviewed and listed at [cursor.com/marketplace](https://cursor.com/marketplace), users will be able to install it with one click — no clone, no `npm install`. Until then, use the local path above.
 
 ## Usage
 
@@ -112,33 +83,17 @@ Cursor's agent will pick the right tool (`chronicle_search`, `chronicle_recent`,
 
 ## Configuration
 
-All optional, set via environment variables in your `mcp.json` `env` block:
+All optional, set as environment variables (e.g. in `~/.zshrc`/`~/.bashrc`, or in the `env` block of the bundled `mcp.json` if you customize it):
 
 | Variable | Default | Purpose |
 |---|---|---|
 | `CODEX_CHRONICLE_DIR` | `~/.codex/memories_extensions/chronicle/resources` | Directory containing `*-10min-*.md` (and `*-6h-*.md` if any) files. |
 | `CODEX_CHRONICLE_LIVE_DIR` | `$TMPDIR` | Root for Chronicle's ephemeral state — expects `<dir>/codex_chronicle/chronicle-started.pid` and `<dir>/chronicle/screen_recording/`. |
-| `CODEX_CHRONICLE_BOOTSTRAP_N` | `3` | Default `limit` for `chronicle_recent`. |
+| `CODEX_CHRONICLE_BOOTSTRAP_N` | `3` | Default `limit` for `chronicle_recent` and the `sessionStart` hook bootstrap. |
 | `CODEX_CHRONICLE_MAX_AGE_HOURS` | `12` | Default `hoursWindow` for `chronicle_recent`. |
 | `CODEX_CHRONICLE_MANIFEST_MAX` | `500` | Hard cap on `chronicle_manifest` rows. |
 
-Example `mcp.json` with custom config:
-
-```json
-{
-  "mcpServers": {
-    "cursor-chronicle": {
-      "type": "stdio",
-      "command": "node",
-      "args": ["/Users/me/code/cursor-chronicle/src/server.js"],
-      "env": {
-        "CODEX_CHRONICLE_BOOTSTRAP_N": "5",
-        "CODEX_CHRONICLE_MAX_AGE_HOURS": "24"
-      }
-    }
-  }
-}
-```
+The bundled `mcp.json` and `hooks/hooks.json` use `${CURSOR_PLUGIN_DIR}` so the absolute path resolves correctly wherever the plugin is installed. To override, edit those files in your local install or fork.
 
 ## Debugging
 
@@ -186,10 +141,12 @@ Cursor logs MCP server stderr to its developer tools. Open **Help → Toggle Dev
 
 ## See also
 
-- [`claude-chronicle`](https://github.com/wojciechkapala/claude-chronicle) — the Claude Code counterpart, using SessionStart / UserPromptSubmit hooks instead of MCP.
-- [Cursor MCP docs](https://cursor.com/docs/context/mcp)
-- [Cursor Rules docs](https://cursor.com/docs/context/rules)
-- [Codex Chronicle](https://github.com/openai/codex)
+- [`claude-chronicle`](https://github.com/wojciechkapala/claude-chronicle) — the Claude Code counterpart, same data source, different host.
+- [Cursor plugins docs](https://cursor.com/docs/plugins) — plugin format reference.
+- [Cursor hooks docs](https://cursor.com/docs/hooks) — full event list and `sessionStart` `additional_context` schema.
+- [Cursor MCP docs](https://cursor.com/docs/context/mcp) — MCP server transport and config.
+- [Cursor Rules docs](https://cursor.com/docs/context/rules) — `.mdc` rule format.
+- [Codex Chronicle](https://github.com/openai/codex) — the upstream screen-recording memory feature.
 
 ## License
 
