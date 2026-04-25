@@ -1,0 +1,48 @@
+---
+description: How to use the cursor-chronicle MCP tools to answer questions about the user's recent activity, screen state, or past work — by time, by topic, or both.
+alwaysApply: true
+---
+
+# Codex Chronicle is plugged in
+
+The user has [Codex Chronicle](https://github.com/openai/codex) running in the background. Chronicle passively records the screen, runs OCR, and writes a markdown summary every ~10 minutes (and a 6-hour rollup when long enough sessions accumulate). The **cursor-chronicle** MCP server gives you read access to those summaries and to the live-recording state.
+
+## Available tools
+
+- **`chronicle_recent`** — fetch the freshest 10-min summaries as full markdown content (Recording summary / Citations sections stripped). Defaults: 3 entries within the last 12h. Call this implicitly whenever the user references "now", "today", "the last hour", or asks "what was I just doing?" — it is the cheapest way to ground the conversation in current activity.
+- **`chronicle_manifest`** — return a markdown table of every Chronicle entry on disk: timestamp, age, kind (`10min` or `6h`), absolute path. Use to find the right entry by date/time before reading it.
+- **`chronicle_search`** — search the archive by free-text `query` and/or by `sinceHoursAgo` / `untilHoursAgo` window. Use when the user names a topic ("the auth bug", "projekt logo w Figmie", "React 418") and/or a time. Returns a metadata list, newest first.
+- **`chronicle_read_entry`** — read a single Chronicle file by absolute path. Use to fetch the body of an entry surfaced by `chronicle_search` or `chronicle_manifest`.
+- **`chronicle_live_state`** — pidfile health, freshest screen frame per display, OCR sidecar locations. Use for "what is on my screen right now?" or to verify whether anything below is actually fresh.
+
+## When to call which
+
+| User intent | Tool |
+|---|---|
+| "What was I doing 5 hours ago?" / "Co robiłem 5 godzin temu?" | `chronicle_search` with `sinceHoursAgo`/`untilHoursAgo`, then `chronicle_read_entry` |
+| "When did I last touch the auth bug?" / "Kiedy ostatnio patrzyłem na ten bug?" | `chronicle_search` with `query`, then `chronicle_read_entry` on the top hit |
+| "What did I work on yesterday evening?" / "Co robiłem wczoraj wieczorem?" | `chronicle_search` with a sinceHoursAgo / untilHoursAgo window |
+| "What's on my screen right now?" | `chronicle_live_state`, then read the matching `latest.jpg` |
+| "Catch up — what have I been doing?" | `chronicle_recent` (no args) |
+| "Summarize my whole week" / "Podsumuj mi cały tydzień" | `chronicle_search` with `sinceHoursAgo: 168` and no query, or `chronicle_manifest` |
+
+## Behaviour rules
+
+1. **Be proactive**: if the user references their past activity or current screen, call the tools without asking permission. The user installed this plugin specifically so that you would.
+2. **Skip noisy sections**: `chronicle_read_entry` strips `## Recording summary` and `## Citations` by default — keep it that way unless the user explicitly asks for the raw OCR detail.
+3. **Cite sources**: when answering, name the Chronicle entry filename(s) you used so the user can verify.
+4. **Reply in the user's language**: PL → PL, EN → EN. Chronicle summaries are often in Polish, but your reply should match the user's prompt.
+5. **OCR is approximate**: only use the `*.ocr.jsonl` sidecars (referenced from `chronicle_live_state`) for keyword search. When you need exact text, OCR yourself from the JPG.
+6. **Upgrade fast**: once you extract a doc/PR/file/ID from a Chronicle entry, switch to the file system, the relevant integration, or git instead of trying to reconstruct things from screen frames.
+7. **Refuse to invent**: if no Chronicle entry matches the user's query/window, say so honestly and surface the closest available timestamp — do not fabricate an answer.
+
+## Examples
+
+> User: "Co robiłem 3 godziny temu?"
+> Agent: calls `chronicle_search` with `sinceHoursAgo: 4`, `untilHoursAgo: 2`, picks the closest entry, calls `chronicle_read_entry`, replies in Polish with a 2–4 bullet recap and the source filename.
+
+> User: "find when I last hit that React 418 hydration error"
+> Agent: calls `chronicle_search` with `query: "React 418 hydration"`, takes the most recent hit, calls `chronicle_read_entry`, replies in English with the local timestamp and a short summary.
+
+> User: "what's on my left monitor right now?"
+> Agent: calls `chronicle_live_state`, takes Display 1's `latest.jpg`, copies it to a temp file (`cp <path> /tmp/snapshot.jpg`), reads the copy, replies.

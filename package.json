@@ -1,0 +1,51 @@
+{
+  "name": "cursor-chronicle",
+  "version": "0.1.0",
+  "description": "MCP server that pipes Codex Chronicle's screen-recording memory into Cursor.",
+  "type": "module",
+  "license": "MIT",
+  "author": {
+    "name": "Wojciech Kapała",
+    "email": "wojtek@botmate.pl",
+    "url": "https://github.com/wojciechkapala"
+  },
+  "homepage": "https://github.com/wojciechkapala/cursor-chronicle",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wojciechkapala/cursor-chronicle.git"
+  },
+  "keywords": [
+    "cursor",
+    "mcp",
+    "model-context-protocol",
+    "codex",
+    "chronicle",
+    "context",
+    "memory",
+    "screen-recording",
+    "recall"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "cursor-chronicle": "src/server.js"
+  },
+  "main": "src/server.js",
+  "files": [
+    "src/",
+    ".cursor/",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "smoke": "node test/smoke.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.23.8"
+  }
+}
