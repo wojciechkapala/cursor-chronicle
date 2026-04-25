@@ -6,14 +6,15 @@
   },
   "metadata": {
     "description": "Pipes Codex Chronicle's screen-recording memory into Cursor.",
-    "version": "0.3.0"
+    "version": "0.3.1"
   },
   "plugins": [
     {
       "name": "cursor-chronicle",
       "source": "./",
       "description": "Auto-injects Codex Chronicle 10-min activity summaries into Cursor via a sessionStart hook, plus an MCP server with 5 on-demand recall tools (time / topic / hybrid). Bilingual EN/PL.",
-      "version": "0.3.0",
+      "version": "0.3.1",
+      "logo": "assets/icon-square.png",
       "author": {
         "name": "Wojciech Kapała",
         "email": "wojtek@botmate.pl"

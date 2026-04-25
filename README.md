@@ -1,9 +1,13 @@
+<p align="center">
+  <img src="assets/icon-square.png" alt="cursor-chronicle icon" width="160" height="160" />
+</p>
+
 # cursor-chronicle
 
 > Bring [Codex Chronicle](https://github.com/openai/codex)'s screen-recording memory into Cursor. Ask Cursor *"what was I doing 5 hours ago?"* or *"when did I last touch the auth bug?"* and get a real answer.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.3.1-blue.svg)](CHANGELOG.md)
 [![Cursor plugin](https://img.shields.io/badge/Cursor-plugin-7C3AED.svg)](https://cursor.com/docs/plugins)
 
 Codex Chronicle (an OpenAI Codex feature) passively records your screen, runs OCR, and writes a markdown summary every ~10 minutes describing what you have been doing across your apps. **cursor-chronicle** is a [Cursor plugin](https://cursor.com/docs/plugins) that ships everything Cursor needs to plug those summaries into the model: a `sessionStart` hook, an MCP server, and an always-on rule.

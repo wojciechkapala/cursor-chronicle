@@ -2,6 +2,13 @@
 
 All notable changes to **cursor-chronicle** are recorded here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] — 2026-04-25
+
+### Added
+- Plugin icon at `assets/icon-square.png` (818×818 PNG, padded from a 724×818 source). Wired into `.cursor-plugin/plugin.json` and the marketplace entry via the `logo` field, so Cursor's plugin manager and the marketplace listing show a proper 1:1 avatar. Original aspect-ratio version kept at `assets/icon.png`.
+- README header: a centered icon embed above the title.
+- `assets/` added to the `files` array in `package.json`.
+
 ## [0.3.0] — 2026-04-25
 
 ### Changed (BREAKING for installation, not for behaviour)

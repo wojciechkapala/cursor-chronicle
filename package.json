@@ -1,6 +1,6 @@
 {
   "name": "cursor-chronicle",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "MCP server that pipes Codex Chronicle's screen-recording memory into Cursor.",
   "type": "module",
   "license": "MIT",
@@ -36,6 +36,7 @@
     "src/",
     "hooks/",
     "rules/",
+    "assets/",
     ".cursor-plugin/",
     "mcp.json",
     "README.md",
