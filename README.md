@@ -3,26 +3,32 @@
 > Bring [Codex Chronicle](https://github.com/openai/codex)'s screen-recording memory into Cursor. Ask Cursor *"what was I doing 5 hours ago?"* or *"when did I last touch the auth bug?"* and get a real answer.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](CHANGELOG.md)
 [![Cursor MCP](https://img.shields.io/badge/Cursor-MCP%20server-7C3AED.svg)](https://cursor.com/docs/context/mcp)
 
 Codex Chronicle (an OpenAI Codex feature) passively records your screen, runs OCR, and writes a markdown summary every ~10 minutes describing what you have been doing across your apps. **cursor-chronicle** is a tiny [Model Context Protocol](https://modelcontextprotocol.io) server that exposes those summaries to Cursor's agent as tools, plus a Cursor rule (`.cursor/rules/cursor-chronicle.mdc`) that teaches the agent when to use them.
 
-It is the Cursor counterpart of [`claude-chronicle`](https://github.com/wojciechkapala/claude-chronicle) — same data source, same behaviour, but built on the primitives Cursor actually exposes (MCP + Rules) rather than Claude Code's hooks.
+It is the Cursor counterpart of [`claude-chronicle`](https://github.com/wojciechkapala/claude-chronicle) — same data source, same behaviour, mapped to the primitives [Cursor actually exposes](https://cursor.com/docs/hooks): hooks, MCP, and Rules.
 
 ## How it works
 
-Cursor has no equivalent of Claude Code's `SessionStart` / `UserPromptSubmit` hooks, so we use the two primitives Cursor *does* support:
+Cursor exposes a `sessionStart` hook with `additional_context` output, an MCP server transport, and `alwaysApply` Rules. cursor-chronicle uses all three, mirroring how `claude-chronicle` uses Claude Code's hook primitives:
 
-1. **MCP server** (`src/server.js`, stdio transport). Exposes 5 tools that wrap the Chronicle archive on disk:
-   - `chronicle_recent` — last N 10-min summaries as full markdown.
-   - `chronicle_manifest` — table of every entry (timestamp, age, kind, path).
-   - `chronicle_search` — by free-text query and/or time window.
-   - `chronicle_read_entry` — full body of one entry, with the noisy `## Recording summary` and `## Citations` sections stripped.
-   - `chronicle_live_state` — pidfile health, freshest screen frame per display, OCR sidecar locations.
-2. **Always-on rule** (`.cursor/rules/cursor-chronicle.mdc` with `alwaysApply: true`). Tells the Cursor agent which tool to reach for given the user's intent (recall by time, by topic, or both — in EN or PL).
+| Concern | Mechanism | File |
+|---|---|---|
+| **Bootstrap context at session start** (3 freshest 10-min summaries + full archive manifest + live-recording state) | `sessionStart` hook returning `additional_context` | `hooks/session-start.js` + `.cursor/hooks.json` |
+| **On-demand recall by time / topic / both** (incl. read a single entry) | MCP server with 5 tools | `src/server.js` |
+| **Tell the agent when to use which tool** | Always-on rule | `.cursor/rules/cursor-chronicle.mdc` |
 
-Together they reproduce the behaviour of `claude-chronicle`'s `SessionStart` hook, `UserPromptSubmit` delta hook, and `/remind` skill — but pulled on demand by Cursor's agent rather than pushed every session.
+The MCP server exposes:
+
+- `chronicle_recent` — last N 10-min summaries as full markdown.
+- `chronicle_manifest` — table of every entry (timestamp, age, kind, path).
+- `chronicle_search` — by free-text query and/or time window.
+- `chronicle_read_entry` — full body of one entry, with the noisy `## Recording summary` and `## Citations` sections stripped.
+- `chronicle_live_state` — pidfile health, freshest screen frame per display, OCR sidecar locations.
+
+Together, the hook handles the always-injected bootstrap that `claude-chronicle`'s `SessionStart` hook handles, and the MCP server handles the on-demand recall that `claude-chronicle`'s `/remind` skill handles.
 
 ## Prerequisites
 
@@ -41,7 +47,27 @@ cd cursor-chronicle
 npm install
 ```
 
-### 2. Register the MCP server in Cursor
+### 2. Register the `sessionStart` hook (auto-bootstrap)
+
+Cursor reads hooks config from `~/.cursor/hooks.json` (global) or `<workspace>/.cursor/hooks.json` (project). Add the bootstrap hook with an **absolute** path to the script you just cloned:
+
+```json
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "node /absolute/path/to/cursor-chronicle/hooks/session-start.js",
+        "timeout": 10
+      }
+    ]
+  }
+}
+```
+
+Cursor watches `hooks.json` and reloads automatically; no restart needed for hook config.
+
+### 3. Register the MCP server (on-demand recall)
 
 Cursor reads MCP config from either `~/.cursor/mcp.json` (global) or `<workspace>/.cursor/mcp.json` (project). Add an entry:
 
@@ -57,11 +83,9 @@ Cursor reads MCP config from either `~/.cursor/mcp.json` (global) or `<workspace
 }
 ```
 
-Replace `/absolute/path/to/cursor-chronicle` with the directory you cloned into.
-
 Restart Cursor and confirm the server is connected: **Settings → Features → Model Context Protocol** should list `cursor-chronicle` with 5 tools available.
 
-### 3. Use the rule
+### 4. Use the rule
 
 The `.cursor/rules/cursor-chronicle.mdc` file in this repo is set to `alwaysApply: true`, so Cursor automatically loads it for any workspace where this folder is the project root. To use the same rule across **all** projects, copy it into your global Cursor rules directory or into each workspace's `.cursor/rules/`:
 
@@ -118,7 +142,18 @@ Example `mcp.json` with custom config:
 
 ## Debugging
 
-### Smoke-test the server outside Cursor
+### Smoke-test the `sessionStart` hook outside Cursor
+
+```bash
+echo '{"hook_event_name":"sessionStart","conversation_id":"test","workspace_roots":["/tmp"]}' \
+  | node hooks/session-start.js \
+  | jq -r '.additional_context' \
+  | head -30
+```
+
+You should see the markdown bootstrap (3 recent summaries + manifest header + live state) that the hook emits.
+
+### Smoke-test the MCP server outside Cursor
 
 ```bash
 ( printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"smoke","version":"0"}}}'

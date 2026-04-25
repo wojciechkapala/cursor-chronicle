@@ -2,6 +2,19 @@
 
 All notable changes to **cursor-chronicle** are recorded here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] — 2026-04-25
+
+### Added
+- **Native Cursor `sessionStart` hook** (`hooks/session-start.js` + `.cursor/hooks.json`). Returns the same bootstrap payload that `claude-chronicle`'s SessionStart hook injects (3 freshest 10-min summaries in full + manifest of every entry + Chronicle live state) via Cursor's `additional_context` channel. The agent now gets full context at session start without having to call any MCP tool first.
+- README now documents both the hook (auto-bootstrap) and the MCP server (on-demand recall) install paths, with a smoke-test recipe for the hook.
+- Rule updated: tells the agent to prefer the bootstrap when present and fall back to MCP tools for older / specific lookups.
+
+### Fixed
+- README incorrectly claimed Cursor has no equivalent of Claude Code's `SessionStart` / `UserPromptSubmit` hooks. It does — see [https://cursor.com/docs/hooks](https://cursor.com/docs/hooks). The architecture section now lists the actual mechanism per concern (hook for bootstrap, MCP for recall, Rule for guidance).
+
+### Bumped
+- `package.json` to 0.2.0.
+
 ## [0.1.0] — 2026-04-25
 
 ### Added

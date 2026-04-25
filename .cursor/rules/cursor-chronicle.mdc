@@ -5,7 +5,12 @@ alwaysApply: true
 
 # Codex Chronicle is plugged in
 
-The user has [Codex Chronicle](https://github.com/openai/codex) running in the background. Chronicle passively records the screen, runs OCR, and writes a markdown summary every ~10 minutes (and a 6-hour rollup when long enough sessions accumulate). The **cursor-chronicle** MCP server gives you read access to those summaries and to the live-recording state.
+The user has [Codex Chronicle](https://github.com/openai/codex) running in the background. Chronicle passively records the screen, runs OCR, and writes a markdown summary every ~10 minutes (and a 6-hour rollup when long enough sessions accumulate).
+
+You have **two** ways to access this data:
+
+1. **Bootstrap (auto)** — the `sessionStart` hook may have already injected a markdown block at the top of this conversation containing: the 3 freshest 10-min summaries in full, a manifest of every Chronicle entry on disk, and the Chronicle live state (pidfile, freshest screen frame per display, OCR sidecars). If you see a `## Recent activity from Codex Chronicle` heading early in the context, treat it as authoritative.
+2. **On-demand (MCP)** — the `cursor-chronicle` MCP server exposes 5 tools you can call any time, regardless of whether the bootstrap fired. Always prefer the bootstrap data when it covers the question; fall back to the MCP tools when you need older entries, a topic-grep, or a fresh live-state read.
 
 ## Available tools
 
